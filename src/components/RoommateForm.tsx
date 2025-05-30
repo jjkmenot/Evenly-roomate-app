@@ -65,7 +65,7 @@ export const RoommateForm: React.FC<RoommateFormProps> = ({ onSubmit, onClose })
               <Button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-700">
                 Add Roommate
               </Button>
-              <Button type="button" variant="outline" onClick={onClose">
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
             </div>
