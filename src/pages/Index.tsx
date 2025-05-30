@@ -1,15 +1,16 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BillForm } from '@/components/BillForm';
 import { ChoreForm } from '@/components/ChoreForm';
 import { RoommateForm } from '@/components/RoommateForm';
+import { ShoppingItemForm } from '@/components/ShoppingItemForm';
 import { ReminderNotifications } from '@/components/ReminderNotifications';
 import { QuickStats } from '@/components/QuickStats';
 import { DashboardTab } from '@/components/DashboardTab';
 import { BillsTab } from '@/components/BillsTab';
 import { ChoresTab } from '@/components/ChoresTab';
 import { RoommatesTab } from '@/components/RoommatesTab';
+import { ShoppingListTab } from '@/components/ShoppingListTab';
 
 interface Roommate {
   id: string;
@@ -38,6 +39,16 @@ interface Chore {
   completedDate?: string;
   description: string;
   priority: 'low' | 'medium' | 'high';
+}
+
+interface ShoppingItem {
+  id: string;
+  item: string;
+  addedBy: string;
+  dateAdded: string;
+  purchased: boolean;
+  purchasedBy?: string;
+  purchasedDate?: string;
 }
 
 const Index = () => {
@@ -101,9 +112,29 @@ const Index = () => {
     },
   ]);
 
+  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([
+    {
+      id: '1',
+      item: 'Toilet Paper',
+      addedBy: '1',
+      dateAdded: '2024-05-28',
+      purchased: false,
+    },
+    {
+      id: '2',
+      item: 'Dish Soap',
+      addedBy: '2',
+      dateAdded: '2024-05-27',
+      purchased: true,
+      purchasedBy: '3',
+      purchasedDate: '2024-05-29',
+    },
+  ]);
+
   const [showBillForm, setShowBillForm] = useState(false);
   const [showChoreForm, setShowChoreForm] = useState(false);
   const [showRoommateForm, setShowRoommateForm] = useState(false);
+  const [showShoppingForm, setShowShoppingForm] = useState(false);
 
   const removeRoommate = (roommateId: string) => {
     setRoommates(roommates.filter(r => r.id !== roommateId));
@@ -131,6 +162,23 @@ const Index = () => {
     ));
   };
 
+  const markShoppingItemPurchased = (itemId: string) => {
+    setShoppingItems(shoppingItems.map(item =>
+      item.id === itemId
+        ? {
+            ...item,
+            purchased: true,
+            purchasedBy: '1', // In a real app, this would be the current user
+            purchasedDate: new Date().toISOString().split('T')[0]
+          }
+        : item
+    ));
+  };
+
+  const removeShoppingItem = (itemId: string) => {
+    setShoppingItems(shoppingItems.filter(item => item.id !== itemId));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-7xl mx-auto">
@@ -144,10 +192,11 @@ const Index = () => {
         <QuickStats bills={bills} chores={chores} />
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[400px] mx-auto">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[500px] mx-auto">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="bills">Bills</TabsTrigger>
             <TabsTrigger value="chores">Chores</TabsTrigger>
+            <TabsTrigger value="shopping">Shopping</TabsTrigger>
             <TabsTrigger value="roommates">Roommates</TabsTrigger>
           </TabsList>
 
@@ -170,6 +219,16 @@ const Index = () => {
               roommates={roommates} 
               onAddChore={() => setShowChoreForm(true)}
               onToggleChore={toggleChoreComplete}
+            />
+          </TabsContent>
+
+          <TabsContent value="shopping" className="space-y-6">
+            <ShoppingListTab 
+              items={shoppingItems}
+              roommates={roommates}
+              onAddItem={() => setShowShoppingForm(true)}
+              onMarkPurchased={markShoppingItemPurchased}
+              onRemoveItem={removeShoppingItem}
             />
           </TabsContent>
 
@@ -220,6 +279,17 @@ const Index = () => {
               setShowRoommateForm(false);
             }}
             onClose={() => setShowRoommateForm(false)}
+          />
+        )}
+
+        {showShoppingForm && (
+          <ShoppingItemForm
+            onSubmit={(item) => {
+              setShoppingItems([...shoppingItems, { ...item, id: Date.now().toString() }]);
+              setShowShoppingForm(false);
+            }}
+            onClose={() => setShowShoppingForm(false)}
+            currentUserId="1" // In a real app, this would be the logged-in user's ID
           />
         )}
       </div>
