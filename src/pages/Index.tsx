@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Plus, DollarSign, Users, CheckCircle, Clock, AlertCircle } from 'lucide
 import { BillForm } from '@/components/BillForm';
 import { ChoreForm } from '@/components/ChoreForm';
 import { RoommateForm } from '@/components/RoommateForm';
+import { ReminderNotifications } from '@/components/ReminderNotifications';
 
 interface Roommate {
   id: string;
@@ -104,6 +104,17 @@ const Index = () => {
   const [showChoreForm, setShowChoreForm] = useState(false);
   const [showRoommateForm, setShowRoommateForm] = useState(false);
 
+  const removeRoommate = (roommateId: string) => {
+    // Remove roommate from the list
+    setRoommates(roommates.filter(r => r.id !== roommateId));
+    
+    // Remove their bills and chores
+    setBills(bills.filter(bill => 
+      bill.paidBy !== roommateId && !bill.splitBetween.includes(roommateId)
+    ));
+    setChores(chores.filter(chore => chore.assignedTo !== roommateId));
+  };
+
   const getRoommateName = (id: string) => {
     return roommates.find(r => r.id === id)?.name || 'Unknown';
   };
@@ -174,6 +185,9 @@ const Index = () => {
           <h1 className="text-4xl font-bold text-gray-800 mb-2">RoomieTracker</h1>
           <p className="text-lg text-gray-600">Manage bills, chores, and roommate responsibilities with ease</p>
         </header>
+
+        {/* Add Reminder Notifications */}
+        <ReminderNotifications roommates={roommates} bills={bills} chores={chores} />
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -474,14 +488,24 @@ const Index = () => {
                     
                     return (
                       <div key={roommate.id} className="p-4 rounded-lg border bg-white/50">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className={`w-8 h-8 rounded-full ${roommate.color} flex items-center justify-center text-white font-bold`}>
-                            {roommate.name.charAt(0)}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full ${roommate.color} flex items-center justify-center text-white font-bold`}>
+                              {roommate.name.charAt(0)}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold">{roommate.name}</h3>
+                              <p className="text-sm text-gray-600">{roommate.email}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-semibold">{roommate.name}</h3>
-                            <p className="text-sm text-gray-600">{roommate.email}</p>
-                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => removeRoommate(roommate.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            Remove
+                          </Button>
                         </div>
                         
                         <div className="space-y-2">
