@@ -11,6 +11,7 @@ import { BillsTab } from '@/components/BillsTab';
 import { ChoresTab } from '@/components/ChoresTab';
 import { RoommatesTab } from '@/components/RoommatesTab';
 import { ShoppingListTab } from '@/components/ShoppingListTab';
+import { AppHeader } from '@/components/AppHeader';
 
 interface Roommate {
   id: string;
@@ -182,10 +183,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-7xl mx-auto">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">RoomieTracker</h1>
-          <p className="text-lg text-gray-600">Manage bills, chores, and roommate responsibilities with ease</p>
-        </header>
+        <AppHeader />
 
         <ReminderNotifications roommates={roommates} bills={bills} chores={chores} />
 

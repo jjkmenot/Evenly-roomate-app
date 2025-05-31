@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Auth = () => {
   const [loginEmail, setLoginEmail] = useState('');
@@ -13,20 +15,68 @@ const Auth = () => {
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
+  const { signIn, signUp, user } = useAuth();
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { loginEmail, loginPassword });
-    // For now, just navigate to main app
-    navigate('/');
+    setLoading(true);
+    
+    console.log('Login attempt:', { loginEmail });
+    
+    const { error } = await signIn(loginEmail, loginPassword);
+    
+    if (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
+      navigate('/');
+    }
+    
+    setLoading(false);
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Signup attempt:', { signupName, signupEmail, signupPassword });
-    // For now, just navigate to main app
-    navigate('/');
+    setLoading(true);
+    
+    console.log('Signup attempt:', { signupName, signupEmail });
+    
+    const { error } = await signUp(signupEmail, signupPassword, signupName);
+    
+    if (error) {
+      console.error('Signup error:', error);
+      toast({
+        title: "Signup failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Account created!",
+        description: "Please check your email to verify your account.",
+      });
+    }
+    
+    setLoading(false);
   };
 
   return (
@@ -59,6 +109,7 @@ const Auth = () => {
                       onChange={(e) => setLoginEmail(e.target.value)}
                       placeholder="your@email.com"
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div>
@@ -70,10 +121,15 @@ const Auth = () => {
                       onChange={(e) => setLoginPassword(e.target.value)}
                       placeholder="••••••••"
                       required
+                      disabled={loading}
                     />
                   </div>
-                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                    Sign In
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    disabled={loading}
+                  >
+                    {loading ? 'Signing In...' : 'Sign In'}
                   </Button>
                 </form>
               </TabsContent>
@@ -88,6 +144,7 @@ const Auth = () => {
                       onChange={(e) => setSignupName(e.target.value)}
                       placeholder="John Doe"
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div>
@@ -99,6 +156,7 @@ const Auth = () => {
                       onChange={(e) => setSignupEmail(e.target.value)}
                       placeholder="your@email.com"
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div>
@@ -110,10 +168,15 @@ const Auth = () => {
                       onChange={(e) => setSignupPassword(e.target.value)}
                       placeholder="••••••••"
                       required
+                      disabled={loading}
                     />
                   </div>
-                  <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
-                    Create Account
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    disabled={loading}
+                  >
+                    {loading ? 'Creating Account...' : 'Create Account'}
                   </Button>
                 </form>
               </TabsContent>
