@@ -22,6 +22,8 @@ export const useRoommates = () => {
     queryKey: ['roommates'],
     queryFn: async () => {
       console.log('Fetching roommates...');
+      console.log('Current user:', user);
+      
       const { data, error } = await supabase
         .from('roommates')
         .select('*')
@@ -38,8 +40,52 @@ export const useRoommates = () => {
     enabled: !!user,
   });
 
+  // Check if current user exists as a roommate, if not create one
+  useEffect(() => {
+    const checkAndCreateCurrentUser = async () => {
+      if (!user || !roommates) return;
+      
+      console.log('Checking if current user exists as roommate...');
+      const userExists = roommates.find(roommate => roommate.user_id === user.id);
+      
+      if (!userExists) {
+        console.log('User not found in roommates, creating...');
+        const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500'];
+        const selectedColor = colors[roommates.length % colors.length];
+
+        const { data, error } = await supabase
+          .from('roommates')
+          .insert([{
+            user_id: user.id,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            email: user.email || '',
+            color: selectedColor,
+          }])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating roommate for current user:', error);
+          toast({
+            title: "Error",
+            description: "Failed to create your roommate profile",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Created roommate for current user:', data);
+          queryClient.invalidateQueries({ queryKey: ['roommates'] });
+        }
+      } else {
+        console.log('Current user found as roommate:', userExists);
+      }
+    };
+
+    checkAndCreateCurrentUser();
+  }, [user, roommates, queryClient, toast]);
+
   const addRoommateMutation = useMutation({
     mutationFn: async (newRoommate: { name: string; email: string }) => {
+      console.log('Adding new roommate:', newRoommate);
       const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500'];
       const selectedColor = colors[roommates.length % colors.length];
 
@@ -54,7 +100,11 @@ export const useRoommates = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in addRoommateMutation:', error);
+        throw error;
+      }
+      console.log('Successfully added roommate:', data);
       return data;
     },
     onSuccess: () => {
@@ -76,12 +126,17 @@ export const useRoommates = () => {
 
   const removeRoommateMutation = useMutation({
     mutationFn: async (roommateId: string) => {
+      console.log('Removing roommate:', roommateId);
       const { error } = await supabase
         .from('roommates')
         .delete()
         .eq('id', roommateId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in removeRoommateMutation:', error);
+        throw error;
+      }
+      console.log('Successfully removed roommate');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roommates'] });
