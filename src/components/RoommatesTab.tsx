@@ -9,6 +9,7 @@ interface Roommate {
   name: string;
   email: string;
   color: string;
+  user_id: string;
 }
 
 interface Bill {
@@ -75,52 +76,59 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {roommates.map((roommate) => {
-            const balance = getTotalBalance(roommate.id);
-            const roommateChores = chores.filter(chore => chore.assignedTo === roommate.id);
-            const completedChores = roommateChores.filter(chore => chore.completed).length;
-            
-            return (
-              <div key={roommate.id} className="p-4 rounded-lg border bg-white/50">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full ${roommate.color} flex items-center justify-center text-white font-bold`}>
-                      {roommate.name.charAt(0)}
+        {roommates.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">No roommates yet!</p>
+            <p className="text-sm text-gray-500">You'll be automatically added as a roommate when you sign up.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {roommates.map((roommate) => {
+              const balance = getTotalBalance(roommate.id);
+              const roommateChores = chores.filter(chore => chore.assignedTo === roommate.id);
+              const completedChores = roommateChores.filter(chore => chore.completed).length;
+              
+              return (
+                <div key={roommate.id} className="p-4 rounded-lg border bg-white/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full ${roommate.color} flex items-center justify-center text-white font-bold`}>
+                        {roommate.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{roommate.name}</h3>
+                        <p className="text-sm text-gray-600">{roommate.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold">{roommate.name}</h3>
-                      <p className="text-sm text-gray-600">{roommate.email}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => onRemoveRoommate(roommate.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Balance:</span>
+                      <span className={`font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {balance >= 0 ? '+' : ''}${balance.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Chores:</span>
+                      <span className="text-sm font-medium">
+                        {completedChores}/{roommateChores.length} done
+                      </span>
                     </div>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => onRemoveRoommate(roommate.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    Remove
-                  </Button>
                 </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Balance:</span>
-                    <span className={`font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {balance >= 0 ? '+' : ''}${balance.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Chores:</span>
-                    <span className="text-sm font-medium">
-                      {completedChores}/{roommateChores.length} done
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
