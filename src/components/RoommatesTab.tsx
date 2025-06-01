@@ -107,7 +107,7 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
           {roommates.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-600 mb-4">No roommates yet!</p>
-              <p className="text-sm text-gray-500">You'll be automatically added as a roommate when you sign up.</p>
+              <p className="text-sm text-gray-500">Add roommates to start managing bills and chores together.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -115,17 +115,29 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
                 const balance = getTotalBalance(roommate.id);
                 const roommateChores = chores.filter(chore => chore.assignedTo === roommate.id);
                 const completedChores = roommateChores.filter(chore => chore.completed).length;
+                const isInvited = roommate.status === 'invited';
                 
                 return (
                   <div key={roommate.id} className="p-4 rounded-lg border bg-white/50">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full ${roommate.color} flex items-center justify-center text-white font-bold`}>
+                        <div className={`w-8 h-8 rounded-full ${roommate.color} flex items-center justify-center text-white font-bold ${isInvited ? 'opacity-60' : ''}`}>
                           {roommate.name.charAt(0)}
                         </div>
                         <div>
-                          <h3 className="font-semibold">{roommate.name}</h3>
-                          <p className="text-sm text-gray-600">{roommate.email}</p>
+                          <div className="flex items-center gap-2">
+                            <h3 className={`font-semibold ${isInvited ? 'text-gray-500' : ''}`}>
+                              {roommate.name}
+                            </h3>
+                            {isInvited && (
+                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                                Invited
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-sm ${isInvited ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {roommate.email}
+                          </p>
                         </div>
                       </div>
                       <Button 
@@ -141,16 +153,21 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Balance:</span>
-                        <span className={`font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'} ${isInvited ? 'opacity-60' : ''}`}>
                           {balance >= 0 ? '+' : ''}${balance.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Chores:</span>
-                        <span className="text-sm font-medium">
+                        <span className={`text-sm font-medium ${isInvited ? 'opacity-60' : ''}`}>
                           {completedChores}/{roommateChores.length} done
                         </span>
                       </div>
+                      {isInvited && (
+                        <div className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded">
+                          Waiting for {roommate.name} to register
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

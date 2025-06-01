@@ -10,14 +10,15 @@ export interface Roommate {
   name: string;
   email: string;
   color: string;
-  user_id: string;
+  user_id: string | null;
+  status: string | null;
+  invited_by: string | null;
 }
 
 export const useRoommates = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [hasCheckedCurrentUser, setHasCheckedCurrentUser] = useState(false);
 
   const { data: roommates = [], isLoading, error } = useQuery({
     queryKey: ['roommates'],
@@ -41,78 +42,59 @@ export const useRoommates = () => {
     enabled: !!user,
   });
 
-  // Check if current user exists as a roommate, if not create one
-  useEffect(() => {
-    const checkAndCreateCurrentUser = async () => {
-      if (!user || !roommates || hasCheckedCurrentUser) return;
+  const sendInvitationEmail = async (roommateName: string, roommateEmail: string, isNewUser: boolean) => {
+    try {
+      const inviterName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Your roommate';
       
-      console.log('Checking if current user exists as roommate...');
-      const userExists = roommates.find(roommate => roommate.user_id === user.id);
-      
-      if (!userExists) {
-        console.log('User not found in roommates, creating...');
-        const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500'];
-        const selectedColor = colors[roommates.length % colors.length];
+      const response = await supabase.functions.invoke('send-roommate-invitation', {
+        body: {
+          invitedBy: inviterName,
+          roommateEmail,
+          roommateName,
+          isNewUser,
+        },
+      });
 
-        try {
-          const { data, error } = await supabase
-            .from('roommates')
-            .insert([{
-              user_id: user.id,
-              name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-              email: user.email || '',
-              color: selectedColor,
-            }])
-            .select()
-            .single();
-
-          if (error) {
-            // Check if it's a duplicate key error (user already exists)
-            if (error.code === '23505') {
-              console.log('User already exists as roommate, skipping creation');
-            } else {
-              console.error('Error creating roommate for current user:', error);
-              toast({
-                title: "Error",
-                description: "Failed to create your roommate profile",
-                variant: "destructive",
-              });
-            }
-          } else {
-            console.log('Created roommate for current user:', data);
-            queryClient.invalidateQueries({ queryKey: ['roommates'] });
-          }
-        } catch (err) {
-          console.error('Unexpected error creating roommate:', err);
-        }
+      if (response.error) {
+        console.error('Error sending invitation email:', response.error);
+        toast({
+          title: "Warning",
+          description: "Roommate added but failed to send email notification",
+          variant: "destructive",
+        });
       } else {
-        console.log('Current user found as roommate:', userExists);
+        console.log('Invitation email sent successfully');
       }
-      
-      setHasCheckedCurrentUser(true);
-    };
-
-    checkAndCreateCurrentUser();
-  }, [user, roommates, hasCheckedCurrentUser, queryClient, toast]);
-
-  // Reset the check when user changes
-  useEffect(() => {
-    setHasCheckedCurrentUser(false);
-  }, [user?.id]);
+    } catch (error) {
+      console.error('Error sending invitation email:', error);
+      toast({
+        title: "Warning",
+        description: "Roommate added but failed to send email notification",
+        variant: "destructive",
+      });
+    }
+  };
 
   const addRoommateMutation = useMutation({
     mutationFn: async (newRoommate: { name: string; email: string }) => {
       console.log('Adding new roommate:', newRoommate);
+      
+      // Check if user with this email already exists
+      const { data: existingUser } = await supabase.auth.admin.getUserByEmail(newRoommate.email);
+      const isExistingUser = !!existingUser.user;
+      
       const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500'];
       const selectedColor = colors[roommates.length % colors.length];
 
       const { data, error } = await supabase
         .from('roommates')
         .insert([{
-          user_id: user?.id,
           name: newRoommate.name,
           email: newRoommate.email,
           color: selectedColor,
+          status: isExistingUser ? 'registered' : 'invited',
+          invited_by: user?.id,
+          user_id: isExistingUser ? existingUser.user?.id : null,
         }])
         .select()
         .single();
@@ -121,23 +103,38 @@ export const useRoommates = () => {
         console.error('Error in addRoommateMutation:', error);
         throw error;
       }
+      
       console.log('Successfully added roommate:', data);
+      
+      // Send invitation email in the background
+      setTimeout(() => {
+        sendInvitationEmail(newRoommate.name, newRoommate.email, !isExistingUser);
+      }, 0);
+      
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roommates'] });
       toast({
         title: "Success",
-        description: "Roommate added successfully",
+        description: "Roommate added successfully and invitation email sent",
       });
     },
     onError: (error: any) => {
       console.error('Error adding roommate:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add roommate",
-        variant: "destructive",
-      });
+      if (error.code === '23505') {
+        toast({
+          title: "Error",
+          description: "This person is already a roommate",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add roommate",
+          variant: "destructive",
+        });
+      }
     },
   });
 

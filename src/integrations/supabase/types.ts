@@ -39,24 +39,30 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          invited_by: string | null
           name: string
-          user_id: string
+          status: string | null
+          user_id: string | null
         }
         Insert: {
           color?: string
           created_at?: string
           email: string
           id?: string
+          invited_by?: string | null
           name: string
-          user_id: string
+          status?: string | null
+          user_id?: string | null
         }
         Update: {
           color?: string
           created_at?: string
           email?: string
           id?: string
+          invited_by?: string | null
           name?: string
-          user_id?: string
+          status?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
