@@ -17,6 +17,7 @@ export const useRoommates = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [hasCheckedCurrentUser, setHasCheckedCurrentUser] = useState(false);
 
   const { data: roommates = [], isLoading, error } = useQuery({
     queryKey: ['roommates'],
@@ -43,7 +44,7 @@ export const useRoommates = () => {
   // Check if current user exists as a roommate, if not create one
   useEffect(() => {
     const checkAndCreateCurrentUser = async () => {
-      if (!user || !roommates) return;
+      if (!user || !roommates || hasCheckedCurrentUser) return;
       
       console.log('Checking if current user exists as roommate...');
       const userExists = roommates.find(roommate => roommate.user_id === user.id);
@@ -53,35 +54,51 @@ export const useRoommates = () => {
         const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500'];
         const selectedColor = colors[roommates.length % colors.length];
 
-        const { data, error } = await supabase
-          .from('roommates')
-          .insert([{
-            user_id: user.id,
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            email: user.email || '',
-            color: selectedColor,
-          }])
-          .select()
-          .single();
+        try {
+          const { data, error } = await supabase
+            .from('roommates')
+            .insert([{
+              user_id: user.id,
+              name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+              email: user.email || '',
+              color: selectedColor,
+            }])
+            .select()
+            .single();
 
-        if (error) {
-          console.error('Error creating roommate for current user:', error);
-          toast({
-            title: "Error",
-            description: "Failed to create your roommate profile",
-            variant: "destructive",
-          });
-        } else {
-          console.log('Created roommate for current user:', data);
-          queryClient.invalidateQueries({ queryKey: ['roommates'] });
+          if (error) {
+            // Check if it's a duplicate key error (user already exists)
+            if (error.code === '23505') {
+              console.log('User already exists as roommate, skipping creation');
+            } else {
+              console.error('Error creating roommate for current user:', error);
+              toast({
+                title: "Error",
+                description: "Failed to create your roommate profile",
+                variant: "destructive",
+              });
+            }
+          } else {
+            console.log('Created roommate for current user:', data);
+            queryClient.invalidateQueries({ queryKey: ['roommates'] });
+          }
+        } catch (err) {
+          console.error('Unexpected error creating roommate:', err);
         }
       } else {
         console.log('Current user found as roommate:', userExists);
       }
+      
+      setHasCheckedCurrentUser(true);
     };
 
     checkAndCreateCurrentUser();
-  }, [user, roommates, queryClient, toast]);
+  }, [user, roommates, hasCheckedCurrentUser, queryClient, toast]);
+
+  // Reset the check when user changes
+  useEffect(() => {
+    setHasCheckedCurrentUser(false);
+  }, [user?.id]);
 
   const addRoommateMutation = useMutation({
     mutationFn: async (newRoommate: { name: string; email: string }) => {
