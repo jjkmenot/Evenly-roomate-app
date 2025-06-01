@@ -19,7 +19,9 @@ interface Roommate {
   name: string;
   email: string;
   color: string;
-  user_id: string;
+  user_id: string | null;
+  status: string | null;
+  invited_by: string | null;
 }
 
 interface Bill {

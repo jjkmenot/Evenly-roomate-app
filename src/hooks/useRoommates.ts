@@ -79,9 +79,25 @@ export const useRoommates = () => {
     mutationFn: async (newRoommate: { name: string; email: string }) => {
       console.log('Adding new roommate:', newRoommate);
       
-      // Check if user with this email already exists
-      const { data: existingUser } = await supabase.auth.admin.getUserByEmail(newRoommate.email);
-      const isExistingUser = !!existingUser.user;
+      // Check if a roommate with this email already exists
+      const { data: existingRoommate } = await supabase
+        .from('roommates')
+        .select('*')
+        .eq('email', newRoommate.email)
+        .single();
+
+      if (existingRoommate) {
+        throw new Error('This person is already a roommate');
+      }
+
+      // Check if user with this email exists in auth.users by trying to find existing profile
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', newRoommate.email)
+        .single();
+
+      const isExistingUser = !!existingProfile;
       
       const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500'];
       const selectedColor = colors[roommates.length % colors.length];
@@ -94,7 +110,7 @@ export const useRoommates = () => {
           color: selectedColor,
           status: isExistingUser ? 'registered' : 'invited',
           invited_by: user?.id,
-          user_id: isExistingUser ? existingUser.user?.id : null,
+          user_id: isExistingUser ? existingProfile.id : null,
         }])
         .select()
         .single();
@@ -122,7 +138,7 @@ export const useRoommates = () => {
     },
     onError: (error: any) => {
       console.error('Error adding roommate:', error);
-      if (error.code === '23505') {
+      if (error.message === 'This person is already a roommate') {
         toast({
           title: "Error",
           description: "This person is already a roommate",
