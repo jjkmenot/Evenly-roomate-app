@@ -13,12 +13,42 @@ export interface Roommate {
   user_id: string | null;
   status: string | null;
   invited_by: string | null;
+  group_id: string | null;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useRoommates = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
+    queryKey: ['groups'],
+    queryFn: async () => {
+      console.log('Fetching groups...');
+      
+      const { data, error } = await supabase
+        .from('groups')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching groups:', error);
+        throw error;
+      }
+
+      console.log('Groups fetched:', data);
+      return data as Group[];
+    },
+    enabled: !!user,
+  });
 
   const { data: roommates = [], isLoading, error } = useQuery({
     queryKey: ['roommates'],
@@ -75,8 +105,46 @@ export const useRoommates = () => {
     }
   };
 
+  const createGroupMutation = useMutation({
+    mutationFn: async (groupName: string) => {
+      console.log('Creating new group:', groupName);
+      
+      const { data, error } = await supabase
+        .from('groups')
+        .insert([{
+          name: groupName,
+          created_by: user?.id,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating group:', error);
+        throw error;
+      }
+      
+      console.log('Successfully created group:', data);
+      return data;
+    },
+    onSuccess: (newGroup) => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      toast({
+        title: "Success",
+        description: `Group "${newGroup.name}" created successfully`,
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error creating group:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create group",
+        variant: "destructive",
+      });
+    },
+  });
+
   const addRoommateMutation = useMutation({
-    mutationFn: async (newRoommate: { name: string; email: string }) => {
+    mutationFn: async (newRoommate: { name: string; email: string; groupId?: string }) => {
       console.log('Adding new roommate:', newRoommate);
       
       // Check if a roommate with this email already exists
@@ -111,6 +179,7 @@ export const useRoommates = () => {
           status: isExistingUser ? 'registered' : 'invited',
           invited_by: user?.id,
           user_id: isExistingUser ? existingProfile.id : null,
+          group_id: newRoommate.groupId || null,
         }])
         .select()
         .single();
@@ -187,11 +256,14 @@ export const useRoommates = () => {
 
   return {
     roommates,
-    isLoading,
+    groups,
+    isLoading: isLoading || isLoadingGroups,
     error,
     addRoommate: addRoommateMutation.mutate,
     removeRoommate: removeRoommateMutation.mutate,
+    createGroup: createGroupMutation.mutate,
     isAddingRoommate: addRoommateMutation.isPending,
     isRemovingRoommate: removeRoommateMutation.isPending,
+    isCreatingGroup: createGroupMutation.isPending,
   };
 };

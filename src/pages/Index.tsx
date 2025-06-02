@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BillForm } from '@/components/BillForm';
 import { ChoreForm } from '@/components/ChoreForm';
 import { RoommateForm } from '@/components/RoommateForm';
+import { GroupForm } from '@/components/GroupForm';
 import { ShoppingItemForm } from '@/components/ShoppingItemForm';
 import { ReminderNotifications } from '@/components/ReminderNotifications';
 import { QuickStats } from '@/components/QuickStats';
@@ -13,6 +14,7 @@ import { ChoresTab } from '@/components/ChoresTab';
 import { RoommatesTab } from '@/components/RoommatesTab';
 import { ShoppingListTab } from '@/components/ShoppingListTab';
 import { AppHeader } from '@/components/AppHeader';
+import { UserProfileDropdown } from '@/components/UserProfileDropdown';
 import { useRoommates } from '@/hooks/useRoommates';
 
 interface Bill {
@@ -48,7 +50,7 @@ interface ShoppingItem {
 }
 
 const Index = () => {
-  const { roommates, addRoommate, removeRoommate, isLoading } = useRoommates();
+  const { roommates, groups, addRoommate, removeRoommate, createGroup, isLoading } = useRoommates();
 
   // Start with empty bills and chores - these will be managed by database later
   const [bills, setBills] = useState<Bill[]>([]);
@@ -58,6 +60,7 @@ const Index = () => {
   const [showBillForm, setShowBillForm] = useState(false);
   const [showChoreForm, setShowChoreForm] = useState(false);
   const [showRoommateForm, setShowRoommateForm] = useState(false);
+  const [showGroupForm, setShowGroupForm] = useState(false);
   const [showShoppingForm, setShowShoppingForm] = useState(false);
 
   const handleRemoveRoommate = (roommateId: string) => {
@@ -118,7 +121,10 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-7xl mx-auto">
-        <AppHeader />
+        <div className="flex justify-between items-center mb-8">
+          <AppHeader />
+          <UserProfileDropdown />
+        </div>
 
         <ReminderNotifications roommates={roommates} bills={bills} chores={chores} />
 
@@ -167,10 +173,12 @@ const Index = () => {
 
           <TabsContent value="roommates" className="space-y-6">
             <RoommatesTab 
-              roommates={roommates} 
+              roommates={roommates}
+              groups={groups}
               bills={bills} 
               chores={chores} 
               onAddRoommate={() => setShowRoommateForm(true)}
+              onCreateGroup={() => setShowGroupForm(true)}
               onRemoveRoommate={handleRemoveRoommate}
             />
           </TabsContent>
@@ -201,11 +209,22 @@ const Index = () => {
 
         {showRoommateForm && (
           <RoommateForm
+            groups={groups}
             onSubmit={(roommate) => {
               addRoommate(roommate);
               setShowRoommateForm(false);
             }}
             onClose={() => setShowRoommateForm(false)}
+          />
+        )}
+
+        {showGroupForm && (
+          <GroupForm
+            onSubmit={(groupName) => {
+              createGroup(groupName);
+              setShowGroupForm(false);
+            }}
+            onClose={() => setShowGroupForm(false)}
           />
         )}
 

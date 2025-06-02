@@ -4,16 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
+import { Group } from '@/hooks/useRoommates';
 
 interface RoommateFormProps {
-  onSubmit: (roommate: any) => void;
+  onSubmit: (roommate: { name: string; email: string; groupId?: string }) => void;
   onClose: () => void;
+  groups: Group[];
 }
 
-export const RoommateForm: React.FC<RoommateFormProps> = ({ onSubmit, onClose }) => {
+export const RoommateForm: React.FC<RoommateFormProps> = ({ onSubmit, onClose, groups }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +26,7 @@ export const RoommateForm: React.FC<RoommateFormProps> = ({ onSubmit, onClose })
     onSubmit({
       name,
       email,
+      groupId: selectedGroupId || undefined,
     });
   };
 
@@ -60,6 +65,25 @@ export const RoommateForm: React.FC<RoommateFormProps> = ({ onSubmit, onClose })
                 required
               />
             </div>
+
+            {groups.length > 0 && (
+              <div>
+                <Label htmlFor="group">Group (Optional)</Label>
+                <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No Group</SelectItem>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="flex gap-2 pt-4">
               <Button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-700">

@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -38,6 +62,7 @@ export type Database = {
           color: string
           created_at: string
           email: string
+          group_id: string | null
           id: string
           invited_by: string | null
           name: string
@@ -48,6 +73,7 @@ export type Database = {
           color?: string
           created_at?: string
           email: string
+          group_id?: string | null
           id?: string
           invited_by?: string | null
           name: string
@@ -58,13 +84,22 @@ export type Database = {
           color?: string
           created_at?: string
           email?: string
+          group_id?: string | null
           id?: string
           invited_by?: string | null
           name?: string
           status?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "roommates_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
