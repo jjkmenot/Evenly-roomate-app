@@ -1,44 +1,35 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useAuth } from '@/contexts/AuthContext';
-import { LogOut } from 'lucide-react';
+import { Home, Users, DollarSign, CheckSquare, ShoppingCart } from 'lucide-react';
 
-export const AppHeader: React.FC = () => {
-  const { user, signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
+export const AppHeader = () => {
   return (
-    <header className="flex justify-between items-center mb-8">
-      <div className="text-center flex-1">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">RoomieTracker</h1>
-        <p className="text-lg text-gray-600">Manage bills, chores, and roommate responsibilities with ease</p>
-      </div>
+    <div>
+      <h1 className="text-4xl font-bold text-gray-800 mb-2">RoomieTracker</h1>
+      <p className="text-gray-600 mb-8">Manage bills, chores, and shopping with your roommates</p>
       
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">
-              {user?.email?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm text-gray-600">{user?.email}</span>
+      <div className="flex flex-wrap gap-4 mb-8">
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 rounded-lg">
+          <Home className="h-5 w-5 text-blue-600" />
+          <span className="text-sm font-medium">Smart Living</span>
         </div>
-        
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleSignOut}
-          className="flex items-center space-x-2"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Sign Out</span>
-        </Button>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 rounded-lg">
+          <Users className="h-5 w-5 text-green-600" />
+          <span className="text-sm font-medium">Group Management</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 rounded-lg">
+          <DollarSign className="h-5 w-5 text-purple-600" />
+          <span className="text-sm font-medium">Bill Splitting</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 rounded-lg">
+          <CheckSquare className="h-5 w-5 text-red-600" />
+          <span className="text-sm font-medium">Chore Tracking</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 rounded-lg">
+          <ShoppingCart className="h-5 w-5 text-yellow-600" />
+          <span className="text-sm font-medium">Shopping Lists</span>
+        </div>
       </div>
-    </header>
+    </div>
   );
 };

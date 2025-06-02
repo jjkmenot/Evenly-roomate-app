@@ -34,9 +34,15 @@ export const useRoommates = () => {
     queryFn: async () => {
       console.log('Fetching groups...');
       
+      if (!user?.id) {
+        console.log('No user found, skipping groups fetch');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('groups')
         .select('*')
+        .eq('created_by', user.id)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -47,7 +53,7 @@ export const useRoommates = () => {
       console.log('Groups fetched:', data);
       return data as Group[];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: roommates = [], isLoading, error } = useQuery({
@@ -56,9 +62,15 @@ export const useRoommates = () => {
       console.log('Fetching roommates...');
       console.log('Current user:', user);
       
+      if (!user?.id) {
+        console.log('No user found, skipping roommates fetch');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('roommates')
         .select('*')
+        .or(`invited_by.eq.${user.id},user_id.eq.${user.id}`)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -69,7 +81,7 @@ export const useRoommates = () => {
       console.log('Roommates fetched:', data);
       return data as Roommate[];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const sendInvitationEmail = async (roommateName: string, roommateEmail: string, isNewUser: boolean) => {
@@ -109,11 +121,15 @@ export const useRoommates = () => {
     mutationFn: async (groupName: string) => {
       console.log('Creating new group:', groupName);
       
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const { data, error } = await supabase
         .from('groups')
         .insert([{
           name: groupName,
-          created_by: user?.id,
+          created_by: user.id,
         }])
         .select()
         .single();
@@ -137,7 +153,7 @@ export const useRoommates = () => {
       console.error('Error creating group:', error);
       toast({
         title: "Error",
-        description: "Failed to create group",
+        description: error.message || "Failed to create group",
         variant: "destructive",
       });
     },
@@ -147,6 +163,10 @@ export const useRoommates = () => {
     mutationFn: async (newRoommate: { name: string; email: string; groupId?: string }) => {
       console.log('Adding new roommate:', newRoommate);
       
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       // Check if a roommate with this email already exists
       const { data: existingRoommate } = await supabase
         .from('roommates')
@@ -177,7 +197,7 @@ export const useRoommates = () => {
           email: newRoommate.email,
           color: selectedColor,
           status: isExistingUser ? 'registered' : 'invited',
-          invited_by: user?.id,
+          invited_by: user.id,
           user_id: isExistingUser ? existingProfile.id : null,
           group_id: newRoommate.groupId || null,
         }])
@@ -216,7 +236,7 @@ export const useRoommates = () => {
       } else {
         toast({
           title: "Error",
-          description: "Failed to add roommate",
+          description: error.message || "Failed to add roommate",
           variant: "destructive",
         });
       }

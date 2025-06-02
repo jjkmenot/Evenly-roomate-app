@@ -4,22 +4,15 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const UserProfileDropdown = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   if (!user) return null;
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
 
   const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
   const userInitial = displayName.charAt(0).toUpperCase();
@@ -42,11 +35,6 @@ export const UserProfileDropdown = () => {
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Sign out</span>
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
