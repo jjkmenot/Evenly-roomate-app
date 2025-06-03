@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -274,6 +273,51 @@ export const useRoommates = () => {
     },
   });
 
+  const deleteGroupMutation = useMutation({
+    mutationFn: async (groupId: string) => {
+      console.log('Deleting group:', groupId);
+      
+      // First, update all roommates in this group to have no group
+      const { error: roommateError } = await supabase
+        .from('roommates')
+        .update({ group_id: null })
+        .eq('group_id', groupId);
+
+      if (roommateError) {
+        console.error('Error updating roommates:', roommateError);
+        throw roommateError;
+      }
+
+      // Then delete the group
+      const { error } = await supabase
+        .from('groups')
+        .delete()
+        .eq('id', groupId);
+
+      if (error) {
+        console.error('Error in deleteGroupMutation:', error);
+        throw error;
+      }
+      console.log('Successfully deleted group');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      queryClient.invalidateQueries({ queryKey: ['roommates'] });
+      toast({
+        title: "Success",
+        description: "Group deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error deleting group:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete group",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     roommates,
     groups,
@@ -282,8 +326,10 @@ export const useRoommates = () => {
     addRoommate: addRoommateMutation.mutate,
     removeRoommate: removeRoommateMutation.mutate,
     createGroup: createGroupMutation.mutate,
+    deleteGroup: deleteGroupMutation.mutate,
     isAddingRoommate: addRoommateMutation.isPending,
     isRemovingRoommate: removeRoommateMutation.isPending,
     isCreatingGroup: createGroupMutation.isPending,
+    isDeletingGroup: deleteGroupMutation.isPending,
   };
 };

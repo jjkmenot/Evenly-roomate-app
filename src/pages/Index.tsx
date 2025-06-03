@@ -14,6 +14,7 @@ import { RoommatesTab } from '@/components/RoommatesTab';
 import { ShoppingListTab } from '@/components/ShoppingListTab';
 import { AppHeader } from '@/components/AppHeader';
 import { UserProfileDropdown } from '@/components/UserProfileDropdown';
+import { AnnouncementsSection } from '@/components/AnnouncementsSection';
 import { useRoommates } from '@/hooks/useRoommates';
 
 interface Bill {
@@ -49,7 +50,7 @@ interface ShoppingItem {
 }
 
 const Index = () => {
-  const { roommates, groups, addRoommate, removeRoommate, createGroup, isLoading } = useRoommates();
+  const { roommates, groups, addRoommate, removeRoommate, createGroup, deleteGroup, isLoading } = useRoommates();
 
   // Start with empty bills and chores - these will be managed by database later
   const [bills, setBills] = useState<Bill[]>([]);
@@ -148,6 +149,7 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
+            <AnnouncementsSection roommates={roommates} groups={groups} />
             <DashboardTab roommates={roommates} bills={bills} chores={chores} />
           </TabsContent>
 
@@ -188,6 +190,7 @@ const Index = () => {
               onAddRoommate={() => setShowRoommateForm(true)}
               onCreateGroup={() => setShowGroupForm(true)}
               onRemoveRoommate={handleRemoveRoommate}
+              onDeleteGroup={deleteGroup}
             />
             
             {/* Show roommate form only in roommates tab and when requested */}

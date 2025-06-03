@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +55,7 @@ interface RoommatesTabProps {
   onAddRoommate: () => void;
   onCreateGroup: () => void;
   onRemoveRoommate: (roommateId: string) => void;
+  onDeleteGroup?: (groupId: string) => void;
 }
 
 export const RoommatesTab: React.FC<RoommatesTabProps> = ({ 
@@ -65,9 +65,11 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
   chores, 
   onAddRoommate,
   onCreateGroup,
-  onRemoveRoommate 
+  onRemoveRoommate,
+  onDeleteGroup
 }) => {
   const [roommateToRemove, setRoommateToRemove] = useState<Roommate | null>(null);
+  const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
 
   const calculateOwedAmount = (bill: Bill, roommateId: string) => {
     if (bill.settled) return 0;
@@ -97,6 +99,21 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
 
   const handleCancelRemove = () => {
     setRoommateToRemove(null);
+  };
+
+  const handleDeleteGroupClick = (group: Group) => {
+    setGroupToDelete(group);
+  };
+
+  const handleConfirmDeleteGroup = () => {
+    if (groupToDelete && onDeleteGroup) {
+      onDeleteGroup(groupToDelete.id);
+      setGroupToDelete(null);
+    }
+  };
+
+  const handleCancelDeleteGroup = () => {
+    setGroupToDelete(null);
   };
 
   const getGroupName = (groupId: string | null) => {
@@ -145,9 +162,25 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
             <div className="space-y-6">
               {Object.entries(groupedRoommates).map(([groupId, groupRoommates]) => (
                 <div key={groupId} className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-                    {groupId === 'ungrouped' ? 'Individual Roommates' : getGroupName(groupId)}
-                  </h3>
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {groupId === 'ungrouped' ? 'Individual Roommates' : getGroupName(groupId)}
+                    </h3>
+                    {groupId !== 'ungrouped' && onDeleteGroup && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const group = groups.find(g => g.id === groupId);
+                          if (group) handleDeleteGroupClick(group);
+                        }}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete Group
+                      </Button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {groupRoommates.map((roommate) => {
                       const balance = getTotalBalance(roommate.id);
@@ -218,6 +251,7 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
         </CardContent>
       </Card>
 
+      {/* Roommate removal dialog */}
       <AlertDialog open={!!roommateToRemove} onOpenChange={handleCancelRemove}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -233,6 +267,27 @@ export const RoommatesTab: React.FC<RoommatesTabProps> = ({
               className="bg-red-600 hover:bg-red-700"
             >
               Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Group deletion dialog */}
+      <AlertDialog open={!!groupToDelete} onOpenChange={handleCancelDeleteGroup}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Group</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{groupToDelete?.name}"? This will remove all roommates from this group but won't delete the roommates themselves. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDeleteGroup}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDeleteGroup}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete Group
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
