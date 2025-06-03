@@ -4,22 +4,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useRoommates } from '@/hooks/useRoommates';
+import { useRoommates, Group } from '@/hooks/useRoommates';
 
 interface RoommateFormProps {
+  groups: Group[];
+  onSubmit: (roommate: { name: string; email: string; groupId?: string }) => void;
   onClose: () => void;
 }
 
-export const RoommateForm: React.FC<RoommateFormProps> = ({ onClose }) => {
+export const RoommateForm: React.FC<RoommateFormProps> = ({ groups, onSubmit, onClose }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
-  const { addRoommate, groups, isAddingRoommate } = useRoommates();
+  const { isAddingRoommate } = useRoommates();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && email.trim()) {
-      addRoommate({ 
+      onSubmit({ 
         name: name.trim(), 
         email: email.trim(),
         groupId: selectedGroupId || undefined
@@ -27,7 +29,6 @@ export const RoommateForm: React.FC<RoommateFormProps> = ({ onClose }) => {
       setName('');
       setEmail('');
       setSelectedGroupId('');
-      onClose();
     }
   };
 
