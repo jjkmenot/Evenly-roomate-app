@@ -3,99 +3,86 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
-import { Group } from '@/hooks/useRoommates';
+import { useRoommates } from '@/hooks/useRoommates';
 
 interface RoommateFormProps {
-  onSubmit: (roommate: { name: string; email: string; groupId?: string }) => void;
   onClose: () => void;
-  groups: Group[];
 }
 
-export const RoommateForm: React.FC<RoommateFormProps> = ({ onSubmit, onClose, groups }) => {
+export const RoommateForm: React.FC<RoommateFormProps> = ({ onClose }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const { addRoommate, groups, isAddingRoommate } = useRoommates();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) return;
-
-    onSubmit({
-      name,
-      email,
-      groupId: selectedGroupId || undefined,
-    });
+    if (name.trim() && email.trim()) {
+      addRoommate({ 
+        name: name.trim(), 
+        email: email.trim(),
+        groupId: selectedGroupId || undefined
+      });
+      setName('');
+      setEmail('');
+      setSelectedGroupId('');
+      onClose();
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-md bg-white">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Add New Roommate</CardTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., John Doe"
-                required
-              />
-            </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter roommate's name"
+          required
+          disabled={isAddingRoommate}
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter roommate's email"
+          required
+          disabled={isAddingRoommate}
+        />
+      </div>
 
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="john@example.com"
-                required
-              />
-            </div>
+      <div>
+        <Label htmlFor="group">Group (Optional)</Label>
+        <Select value={selectedGroupId} onValueChange={setSelectedGroupId} disabled={isAddingRoommate}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a group (optional)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="no-group">No Group</SelectItem>
+            {groups.map((group) => (
+              <SelectItem key={group.id} value={group.id}>
+                {group.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-            {groups.length > 0 && (
-              <div>
-                <Label htmlFor="group">Group (Optional)</Label>
-                <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No Group</SelectItem>
-                    {groups.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-4">
-              <Button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-700">
-                Add Roommate
-              </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+      <div className="flex gap-2">
+        <Button type="submit" disabled={isAddingRoommate} className="flex-1">
+          {isAddingRoommate ? 'Adding...' : 'Add Roommate'}
+        </Button>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isAddingRoommate}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   );
 };
