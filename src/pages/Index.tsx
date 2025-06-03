@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BillForm } from '@/components/BillForm';
@@ -62,6 +61,7 @@ const Index = () => {
   const [showRoommateForm, setShowRoommateForm] = useState(false);
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [showShoppingForm, setShowShoppingForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleRemoveRoommate = (roommateId: string) => {
     removeRoommate(roommateId);
@@ -70,6 +70,14 @@ const Index = () => {
       bill.paidBy !== roommateId && !bill.splitBetween.includes(roommateId)
     ));
     setChores(chores.filter(chore => chore.assignedTo !== roommateId));
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Hide roommate form when navigating away from roommates tab
+    if (value !== 'roommates') {
+      setShowRoommateForm(false);
+    }
   };
 
   const toggleChoreComplete = (choreId: string) => {
@@ -130,7 +138,7 @@ const Index = () => {
 
         <QuickStats bills={bills} chores={chores} />
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 lg:w-[500px] mx-auto">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="bills">Bills</TabsTrigger>
@@ -181,10 +189,24 @@ const Index = () => {
               onCreateGroup={() => setShowGroupForm(true)}
               onRemoveRoommate={handleRemoveRoommate}
             />
+            
+            {/* Show roommate form only in roommates tab and when requested */}
+            {showRoommateForm && (
+              <div className="mt-6">
+                <RoommateForm
+                  groups={groups}
+                  onSubmit={(roommate) => {
+                    addRoommate(roommate);
+                    setShowRoommateForm(false);
+                  }}
+                  onClose={() => setShowRoommateForm(false)}
+                />
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
-        {/* Modals */}
+        {/* Other modals (not in roommates tab) */}
         {showBillForm && (
           <BillForm
             roommates={roommates}
@@ -204,17 +226,6 @@ const Index = () => {
               setShowChoreForm(false);
             }}
             onClose={() => setShowChoreForm(false)}
-          />
-        )}
-
-        {showRoommateForm && (
-          <RoommateForm
-            groups={groups}
-            onSubmit={(roommate) => {
-              addRoommate(roommate);
-              setShowRoommateForm(false);
-            }}
-            onClose={() => setShowRoommateForm(false)}
           />
         )}
 
