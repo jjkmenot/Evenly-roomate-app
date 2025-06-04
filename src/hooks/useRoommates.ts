@@ -96,6 +96,8 @@ export const useRoommates = () => {
         },
       });
 
+      console.log('Email invitation response:', response);
+
       if (response.error) {
         console.error('Error sending invitation email:', response.error);
         toast({
@@ -103,13 +105,19 @@ export const useRoommates = () => {
           description: "Roommate added but failed to send email notification",
           variant: "destructive",
         });
+      } else if (response.data?.warning) {
+        console.log('Email warning:', response.data.warning);
+        toast({
+          title: "Note",
+          description: "Roommate added but email requires domain verification. Visit resend.com/domains to set up email sending.",
+        });
       } else {
         console.log('Invitation email sent successfully');
       }
     } catch (error) {
       console.error('Error sending invitation email:', error);
       toast({
-        title: "Warning",
+        title: "Warning", 
         description: "Roommate added but failed to send email notification",
         variant: "destructive",
       });

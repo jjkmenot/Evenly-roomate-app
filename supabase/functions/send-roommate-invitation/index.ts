@@ -53,12 +53,46 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     }
 
+    console.log(`Attempting to send invitation email to: ${roommateEmail}`);
+
     const emailResponse = await resend.emails.send({
       from: "Roommate App <onboarding@resend.dev>",
       to: [roommateEmail],
       subject: subject,
       html: htmlContent,
     });
+
+    console.log("Email API response:", emailResponse);
+
+    // Check if there's a domain verification error
+    if (emailResponse.error && emailResponse.error.message && 
+        emailResponse.error.message.includes("verify a domain")) {
+      console.log("Domain verification required for Resend");
+      return new Response(JSON.stringify({ 
+        warning: "Email not sent - domain verification required",
+        details: "To send emails to other users, you need to verify a domain at resend.com/domains"
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+    }
+
+    if (emailResponse.error) {
+      console.error("Error sending invitation email:", emailResponse.error);
+      return new Response(JSON.stringify({ 
+        error: emailResponse.error.message || "Failed to send email",
+        details: emailResponse.error
+      }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+    }
 
     console.log("Invitation email sent successfully:", emailResponse);
 

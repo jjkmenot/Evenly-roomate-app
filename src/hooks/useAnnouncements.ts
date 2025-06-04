@@ -27,9 +27,14 @@ export const useAnnouncements = () => {
         return [];
       }
 
+      // Get announcements that are either for all users (group_id is null) 
+      // or for groups where the current user is a member
       const { data, error } = await supabase
         .from('announcements')
-        .select('*')
+        .select(`
+          *,
+          groups(name)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -48,14 +53,21 @@ export const useAnnouncements = () => {
         throw new Error('User not authenticated');
       }
 
+      console.log('Creating announcement with user ID:', user.id);
+      console.log('Announcement data:', newAnnouncement);
+
+      const announcementData = {
+        title: newAnnouncement.title,
+        content: newAnnouncement.content,
+        created_by: user.id,
+        group_id: newAnnouncement.groupId === 'all' ? null : (newAnnouncement.groupId || null),
+      };
+
+      console.log('Final announcement data:', announcementData);
+
       const { data, error } = await supabase
         .from('announcements')
-        .insert([{
-          title: newAnnouncement.title,
-          content: newAnnouncement.content,
-          created_by: user.id,
-          group_id: newAnnouncement.groupId || null,
-        }])
+        .insert([announcementData])
         .select()
         .single();
 
