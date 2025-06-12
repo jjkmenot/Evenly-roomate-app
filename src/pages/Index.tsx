@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BillForm } from '@/components/BillForm';
@@ -118,42 +119,82 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading roommates...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
+            <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-t-purple-400 animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+          </div>
+          <p className="text-gray-700 font-medium">Loading your roommate experience...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Background decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-blue-200/30 to-purple-200/30 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-tr from-indigo-200/30 to-pink-200/30 blur-3xl"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6">
+        {/* Header Section */}
+        <div className="flex justify-between items-start mb-8">
           <AppHeader />
           <UserProfileDropdown />
         </div>
 
-        <ReminderNotifications roommates={roommates} bills={bills} chores={chores} />
+        {/* Notifications and Stats */}
+        <div className="space-y-6 mb-8">
+          <ReminderNotifications roommates={roommates} bills={bills} chores={chores} />
+          <QuickStats bills={bills} chores={chores} />
+        </div>
 
-        <QuickStats bills={bills} chores={chores} />
+        {/* Main Content */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
+          <div className="flex justify-center">
+            <TabsList className="grid w-full grid-cols-5 lg:w-[600px] h-12 p-1 bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg rounded-xl">
+              <TabsTrigger 
+                value="dashboard" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-lg font-medium"
+              >
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger 
+                value="bills" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-lg font-medium"
+              >
+                Bills
+              </TabsTrigger>
+              <TabsTrigger 
+                value="chores" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-lg font-medium"
+              >
+                Chores
+              </TabsTrigger>
+              <TabsTrigger 
+                value="shopping" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-lg font-medium"
+              >
+                Shopping
+              </TabsTrigger>
+              <TabsTrigger 
+                value="roommates" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-lg font-medium"
+              >
+                Roommates
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[500px] mx-auto">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="bills">Bills</TabsTrigger>
-            <TabsTrigger value="chores">Chores</TabsTrigger>
-            <TabsTrigger value="shopping">Shopping</TabsTrigger>
-            <TabsTrigger value="roommates">Roommates</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-6">
+          <TabsContent value="dashboard" className="space-y-8 animate-fade-in">
             <AnnouncementsSection roommates={roommates} groups={groups} />
             <DashboardTab roommates={roommates} bills={bills} chores={chores} />
           </TabsContent>
 
-          <TabsContent value="bills" className="space-y-6">
+          <TabsContent value="bills" className="space-y-8 animate-fade-in">
             <BillsTab 
               bills={bills} 
               roommates={roommates} 
@@ -162,7 +203,7 @@ const Index = () => {
             />
           </TabsContent>
 
-          <TabsContent value="chores" className="space-y-6">
+          <TabsContent value="chores" className="space-y-8 animate-fade-in">
             <ChoresTab 
               chores={chores} 
               roommates={roommates} 
@@ -171,7 +212,7 @@ const Index = () => {
             />
           </TabsContent>
 
-          <TabsContent value="shopping" className="space-y-6">
+          <TabsContent value="shopping" className="space-y-8 animate-fade-in">
             <ShoppingListTab 
               items={shoppingItems}
               roommates={roommates}
@@ -181,7 +222,7 @@ const Index = () => {
             />
           </TabsContent>
 
-          <TabsContent value="roommates" className="space-y-6">
+          <TabsContent value="roommates" className="space-y-8 animate-fade-in">
             <RoommatesTab 
               roommates={roommates}
               groups={groups}
@@ -195,7 +236,7 @@ const Index = () => {
             
             {/* Show roommate form only in roommates tab and when requested */}
             {showRoommateForm && (
-              <div className="mt-6">
+              <div className="mt-8 animate-scale-in">
                 <RoommateForm
                   groups={groups}
                   onSubmit={(roommate) => {
@@ -209,48 +250,56 @@ const Index = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Other modals (not in roommates tab) */}
+        {/* Modal Forms */}
         {showBillForm && (
-          <BillForm
-            roommates={roommates}
-            onSubmit={(bill) => {
-              setBills([...bills, { ...bill, id: Date.now().toString() }]);
-              setShowBillForm(false);
-            }}
-            onClose={() => setShowBillForm(false)}
-          />
+          <div className="animate-fade-in">
+            <BillForm
+              roommates={roommates}
+              onSubmit={(bill) => {
+                setBills([...bills, { ...bill, id: Date.now().toString() }]);
+                setShowBillForm(false);
+              }}
+              onClose={() => setShowBillForm(false)}
+            />
+          </div>
         )}
 
         {showChoreForm && (
-          <ChoreForm
-            roommates={roommates}
-            onSubmit={(chore) => {
-              setChores([...chores, { ...chore, id: Date.now().toString(), completed: false }]);
-              setShowChoreForm(false);
-            }}
-            onClose={() => setShowChoreForm(false)}
-          />
+          <div className="animate-fade-in">
+            <ChoreForm
+              roommates={roommates}
+              onSubmit={(chore) => {
+                setChores([...chores, { ...chore, id: Date.now().toString(), completed: false }]);
+                setShowChoreForm(false);
+              }}
+              onClose={() => setShowChoreForm(false)}
+            />
+          </div>
         )}
 
         {showGroupForm && (
-          <GroupForm
-            onSubmit={(groupName) => {
-              createGroup(groupName);
-              setShowGroupForm(false);
-            }}
-            onClose={() => setShowGroupForm(false)}
-          />
+          <div className="animate-fade-in">
+            <GroupForm
+              onSubmit={(groupName) => {
+                createGroup(groupName);
+                setShowGroupForm(false);
+              }}
+              onClose={() => setShowGroupForm(false)}
+            />
+          </div>
         )}
 
         {showShoppingForm && (
-          <ShoppingItemForm
-            onSubmit={(item) => {
-              setShoppingItems([...shoppingItems, { ...item, id: Date.now().toString() }]);
-              setShowShoppingForm(false);
-            }}
-            onClose={() => setShowShoppingForm(false)}
-            currentUserId={roommates[0]?.id || '1'}
-          />
+          <div className="animate-fade-in">
+            <ShoppingItemForm
+              onSubmit={(item) => {
+                setShoppingItems([...shoppingItems, { ...item, id: Date.now().toString() }]);
+                setShowShoppingForm(false);
+              }}
+              onClose={() => setShowShoppingForm(false)}
+              currentUserId={roommates[0]?.id || '1'}
+            />
+          </div>
         )}
       </div>
     </div>

@@ -20,19 +20,34 @@ export const UserProfileDropdown = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full bg-purple-600 hover:bg-purple-700">
-          <div className="flex items-center justify-center h-full w-full text-white font-semibold">
+        <Button 
+          variant="ghost" 
+          className="relative h-12 w-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30"
+        >
+          <div className="flex items-center justify-center h-full w-full text-white font-bold text-lg">
             {userInitial}
           </div>
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400/20 to-pink-400/20 animate-pulse"></div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{displayName}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
-            </p>
+      <DropdownMenuContent 
+        className="w-72 bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-xl" 
+        align="end" 
+        forceMount
+      >
+        <DropdownMenuLabel className="font-normal p-4">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
+                {userInitial}
+              </div>
+              <div>
+                <p className="text-base font-semibold leading-none text-gray-800">{displayName}</p>
+                <p className="text-sm leading-none text-gray-500 mt-1">
+                  {user.email}
+                </p>
+              </div>
+            </div>
           </div>
         </DropdownMenuLabel>
       </DropdownMenuContent>
