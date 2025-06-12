@@ -8,17 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X } from 'lucide-react';
 import { Group } from '@/hooks/useRoommates';
+import { Announcement } from '@/hooks/useAnnouncements';
 
 interface AnnouncementFormProps {
   groups: Group[];
-  onSubmit: (announcement: { title: string; content: string; groupId?: string }) => void;
+  announcement?: Announcement;
+  onSubmit: (announcement: { title: string; content: string; groupId?: string; dueDate?: string }) => void;
   onClose: () => void;
 }
 
-export const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ groups, onSubmit, onClose }) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+export const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ groups, announcement, onSubmit, onClose }) => {
+  const [title, setTitle] = useState(announcement?.title || '');
+  const [content, setContent] = useState(announcement?.content || '');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(announcement?.group_id || '');
+  const [dueDate, setDueDate] = useState(
+    announcement?.due_date ? new Date(announcement.due_date).toISOString().slice(0, 16) : ''
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,11 +33,15 @@ export const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ groups, onSu
       title: title.trim(),
       content: content.trim(),
       groupId: selectedGroupId || undefined,
+      dueDate: dueDate || undefined,
     });
 
-    setTitle('');
-    setContent('');
-    setSelectedGroupId('');
+    if (!announcement) {
+      setTitle('');
+      setContent('');
+      setSelectedGroupId('');
+      setDueDate('');
+    }
   };
 
   return (
@@ -40,7 +49,7 @@ export const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ groups, onSu
       <Card className="w-full max-w-md bg-white">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Create Announcement</CardTitle>
+            <CardTitle>{announcement ? 'Edit Announcement' : 'Create Announcement'}</CardTitle>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -88,9 +97,23 @@ export const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ groups, onSu
               </Select>
             </div>
 
+            <div>
+              <Label htmlFor="dueDate">Due Date (Optional)</Label>
+              <Input
+                id="dueDate"
+                type="datetime-local"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                placeholder="When should this announcement expire?"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Announcement will be automatically removed after this date
+              </p>
+            </div>
+
             <div className="flex gap-2 pt-4">
               <Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700">
-                Create Announcement
+                {announcement ? 'Update Announcement' : 'Create Announcement'}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel

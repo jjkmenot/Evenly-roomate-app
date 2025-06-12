@@ -14,6 +14,7 @@ export type Database = {
           content: string
           created_at: string
           created_by: string
+          due_date: string | null
           group_id: string | null
           id: string
           title: string
@@ -23,6 +24,7 @@ export type Database = {
           content: string
           created_at?: string
           created_by: string
+          due_date?: string | null
           group_id?: string | null
           id?: string
           title: string
@@ -32,6 +34,7 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string
+          due_date?: string | null
           group_id?: string | null
           id?: string
           title?: string
@@ -144,7 +147,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_expired_announcements: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

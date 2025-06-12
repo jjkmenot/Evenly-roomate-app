@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Megaphone, Users } from 'lucide-react';
-import { useAnnouncements } from '@/hooks/useAnnouncements';
+import { Plus, Megaphone, Users, Edit, Trash2, Clock } from 'lucide-react';
+import { useAnnouncements, Announcement } from '@/hooks/useAnnouncements';
 import { AnnouncementForm } from '@/components/AnnouncementForm';
 import { Group } from '@/hooks/useRoommates';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Roommate {
   id: string;
@@ -25,8 +26,10 @@ interface AnnouncementsSectionProps {
 }
 
 export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({ roommates, groups }) => {
-  const { announcements, isLoading, createAnnouncement, isCreatingAnnouncement } = useAnnouncements();
+  const { user } = useAuth();
+  const { announcements, isLoading, createAnnouncement, updateAnnouncement, deleteAnnouncement, isCreatingAnnouncement } = useAnnouncements();
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
 
   const getRoommateName = (userId: string) => {
     return roommates.find(r => r.user_id === userId)?.name || 'Unknown User';
@@ -45,6 +48,53 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({ room
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const formatDueDate = (dueDateString: string) => {
+    const dueDate = new Date(dueDateString);
+    const now = new Date();
+    const diffHours = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+    
+    if (diffHours < 24) {
+      return `Expires in ${diffHours}h`;
+    } else {
+      const diffDays = Math.floor(diffHours / 24);
+      return `Expires in ${diffDays}d`;
+    }
+  };
+
+  const handleEdit = (announcement: Announcement) => {
+    setEditingAnnouncement(announcement);
+    setShowAnnouncementForm(true);
+  };
+
+  const handleDelete = (announcementId: string) => {
+    if (confirm('Are you sure you want to delete this announcement?')) {
+      deleteAnnouncement(announcementId);
+    }
+  };
+
+  const handleFormSubmit = (announcementData: { title: string; content: string; groupId?: string; dueDate?: string }) => {
+    if (editingAnnouncement) {
+      updateAnnouncement({
+        id: editingAnnouncement.id,
+        updates: {
+          title: announcementData.title,
+          content: announcementData.content,
+          group_id: announcementData.groupId === 'all' ? null : (announcementData.groupId || null),
+          due_date: announcementData.dueDate || null,
+        }
+      });
+    } else {
+      createAnnouncement(announcementData);
+    }
+    setShowAnnouncementForm(false);
+    setEditingAnnouncement(null);
+  };
+
+  const handleFormClose = () => {
+    setShowAnnouncementForm(false);
+    setEditingAnnouncement(null);
   };
 
   if (isLoading) {
@@ -89,6 +139,12 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({ room
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-semibold text-gray-800">{announcement.title}</h3>
                     <div className="flex items-center gap-2">
+                      {announcement.due_date && (
+                        <Badge variant="outline" className="text-xs bg-yellow-50">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {formatDueDate(announcement.due_date)}
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="text-xs">
                         <Users className="h-3 w-3 mr-1" />
                         {getGroupName(announcement.group_id)}
@@ -96,6 +152,26 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({ room
                       <span className="text-xs text-gray-500">
                         {formatDate(announcement.created_at)}
                       </span>
+                      {user?.id === announcement.created_by && (
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(announcement)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(announcement.id)}
+                            className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <p className="text-gray-700 text-sm mb-2">{announcement.content}</p>
@@ -119,11 +195,9 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({ room
       {showAnnouncementForm && (
         <AnnouncementForm
           groups={groups}
-          onSubmit={(announcement) => {
-            createAnnouncement(announcement);
-            setShowAnnouncementForm(false);
-          }}
-          onClose={() => setShowAnnouncementForm(false)}
+          announcement={editingAnnouncement || undefined}
+          onSubmit={handleFormSubmit}
+          onClose={handleFormClose}
         />
       )}
     </>

@@ -11,6 +11,7 @@ export interface Announcement {
   content: string;
   created_by: string;
   group_id: string | null;
+  due_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -27,14 +28,14 @@ export const useAnnouncements = () => {
         return [];
       }
 
-      // Get announcements that are either for all users (group_id is null) 
-      // or for groups where the current user is a member
+      // Get announcements that are not expired
       const { data, error } = await supabase
         .from('announcements')
         .select(`
           *,
           groups(name)
         `)
+        .or('due_date.is.null,due_date.gte.' + new Date().toISOString())
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -48,7 +49,7 @@ export const useAnnouncements = () => {
   });
 
   const createAnnouncementMutation = useMutation({
-    mutationFn: async (newAnnouncement: { title: string; content: string; groupId?: string }) => {
+    mutationFn: async (newAnnouncement: { title: string; content: string; groupId?: string; dueDate?: string }) => {
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
@@ -61,6 +62,7 @@ export const useAnnouncements = () => {
         content: newAnnouncement.content,
         created_by: user.id,
         group_id: newAnnouncement.groupId === 'all' ? null : (newAnnouncement.groupId || null),
+        due_date: newAnnouncement.dueDate || null,
       };
 
       console.log('Final announcement data:', announcementData);
@@ -100,6 +102,76 @@ export const useAnnouncements = () => {
     },
   });
 
+  const updateAnnouncementMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Announcement> }) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data, error } = await supabase
+        .from('announcements')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating announcement:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      toast({
+        title: "Success",
+        description: "Announcement updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error updating announcement:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update announcement",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAnnouncementMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting announcement:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      toast({
+        title: "Success",
+        description: "Announcement deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error deleting announcement:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete announcement",
+        variant: "destructive",
+      });
+    },
+  });
+
   const sendAnnouncementEmail = async (title: string, content: string, groupId?: string) => {
     try {
       const response = await supabase.functions.invoke('send-announcement-email', {
@@ -126,6 +198,10 @@ export const useAnnouncements = () => {
     isLoading,
     error,
     createAnnouncement: createAnnouncementMutation.mutate,
+    updateAnnouncement: updateAnnouncementMutation.mutate,
+    deleteAnnouncement: deleteAnnouncementMutation.mutate,
     isCreatingAnnouncement: createAnnouncementMutation.isPending,
+    isUpdatingAnnouncement: updateAnnouncementMutation.isPending,
+    isDeletingAnnouncement: deleteAnnouncementMutation.isPending,
   };
 };
